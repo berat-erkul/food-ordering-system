@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <modules>
+        <module>common</module>
         <module>order-service</module>
     </modules>
 
@@ -26,6 +27,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.food.ordering.system</groupId>
+                <artifactId>common-domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.food.ordering.system</groupId>
                 <artifactId>order-domain-core</artifactId>
