@@ -2,10 +2,12 @@ package entity;
 
 import com.food.ordering.system.domain.entity.AggregateRoot;
 import com.food.ordering.system.domain.valueobject.*;
+import valueobject.OrderItemId;
 import valueobject.StreetAddress;
 import valueobject.TrackingId;
 
 import java.util.List;
+import java.util.UUID;
 
 public class Order extends AggregateRoot<OrderId> {
 
@@ -19,6 +21,24 @@ public class Order extends AggregateRoot<OrderId> {
     private TrackingId trackingId;
     private OrderStatus orderStatus; //comes from common module
     private List<String> failure;
+
+    // public because this is an aggregate root so we want to create it from outside of the aggregate root
+    // agg. root must be reachable from outside of the aggregate root
+    public void initializeOrder() {
+        setId(new OrderId(UUID.randomUUID()));
+        trackingId = new TrackingId(UUID.randomUUID());
+        orderStatus = OrderStatus.PENDING;
+        initializeOrderItems();
+    }
+
+
+    private void initializeOrderItems() {
+        //we don't need to make it unique, we just use it to say "The -second- Item of this Order".
+        long itemId = 1;
+        for (OrderItem orderItem: items){
+            orderItem.initializeOrderItem(super.getId(), new OrderItemId(itemId++));
+        }
+    }
 
     //Constructor with builder design pattern (first fill then create with new keyword)
     private Order(Builder builder) {

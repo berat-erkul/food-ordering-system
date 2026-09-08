@@ -12,6 +12,13 @@ public class OrderItem extends BaseEntity<OrderItemId> {
     private final Money money;
     private final Money subTotal;
 
+    //initializer method of the child must be "non access modifier" to be accessible by the parent class
+    //Just reachable by "Order" and "Product" classes - in the same package
+    void initializeOrderItem(OrderId orderId, OrderItemId orderItemId) {
+        this.orderId = orderId;
+        super.setId(orderItemId);
+    }
+
     // Constructor is private to enforce the use of the "Builder pattern"
     private OrderItem(Builder builder) {
         money = builder.money;
