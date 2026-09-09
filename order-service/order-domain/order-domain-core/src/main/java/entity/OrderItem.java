@@ -9,7 +9,7 @@ public class OrderItem extends BaseEntity<OrderItemId> {
     private OrderId orderId;
     private final Product product;
     private final int quantity;
-    private final Money money;
+    private final Money price;
     private final Money subTotal;
 
     //initializer method of the child must be "non access modifier" to be accessible by the parent class
@@ -19,9 +19,15 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         super.setId(orderItemId);
     }
 
+    boolean isPriceValid(){
+        return price.isGreaterThan(Money.ZERO) &&
+                price.equals(product.getPrice()) &&
+                price.multiply(quantity).equals(subTotal);
+    }
+
     // Constructor is private to enforce the use of the "Builder pattern"
     private OrderItem(Builder builder) {
-        money = builder.money;
+        price = builder.price;
         super.setId(builder.orderItemId);
         product = builder.product;
         quantity = builder.quantity;
@@ -44,8 +50,8 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         return quantity;
     }
 
-    public Money getMoney() {
-        return money;
+    public Money getPrice() {
+        return price;
     }
 
     public Money getSubTotal() {
@@ -56,7 +62,7 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         private OrderItemId orderItemId;
         private Product product;
         private int quantity;
-        private Money money;
+        private Money price;
         private Money subTotal;
 
         public Builder setId(OrderItemId id) {
@@ -74,8 +80,8 @@ public class OrderItem extends BaseEntity<OrderItemId> {
             return this;
         }
 
-        public Builder setMoney(Money money) {
-            this.money = money;
+        public Builder setPrice(Money price) {
+            this.price = price;
             return this;
         }
 
