@@ -21,7 +21,10 @@ public class Order extends AggregateRoot<OrderId> {
     // non-final fields - I'll change them in business logic after creating the order entity
     private TrackingId trackingId;
     private OrderStatus orderStatus; //comes from common module
-    private List<String> failure;
+    private List<String> failureMessages;
+
+
+    // ------------------ IMPLEMENTATION METHODS ------------------
 
     // public because this is an aggregate root so we want to create it from outside of the aggregate root
     // agg. root must be reachable from outside of the aggregate root
@@ -39,6 +42,47 @@ public class Order extends AggregateRoot<OrderId> {
         validateInitialOrder();
         validateTotalPrice();
         validateItemsPrice();
+    }
+
+        // --- STATE CHANGING METHODS ---
+
+    public void pay(){
+        if (orderStatus != OrderStatus.PENDING) {
+            throw new OrderDomainException("Order is not in correct state for pay operation!");
+        }
+        orderStatus = OrderStatus.PAID;
+    }
+
+    public void approve(){
+        if (orderStatus != OrderStatus.PAID) {
+            throw new OrderDomainException("Order is not in correct state for approve operation!");
+        }
+        orderStatus = OrderStatus.APPROVED;
+    }
+
+    public void initCancel(List<String> failureMessages){
+        if (orderStatus != OrderStatus.PAID) {
+            throw new OrderDomainException("Order is not in correct state for initCancel operation!");
+        }
+        orderStatus = OrderStatus.CANCELLING;
+        updateFailureMessages(failureMessages);
+    }
+
+    public void cancel(List<String> failureMessages){
+        if (orderStatus != OrderStatus.CANCELLING && orderStatus != OrderStatus.PENDING) {
+            throw new OrderDomainException("Order is not in correct state for cancel operation!");
+        }
+        orderStatus = OrderStatus.CANCELLED;
+        updateFailureMessages(failureMessages);
+    }
+
+    private void updateFailureMessages (List<String> failureMessages) {
+        if (this.failureMessages != null && failureMessages != null) {
+            this.failureMessages.addAll(failureMessages.stream().filter(message -> !message.isEmpty()).toList());
+        }
+        if (this.failureMessages == null) {
+            this.failureMessages = failureMessages;
+        }
     }
 
     private void validateInitialOrder() {
@@ -89,7 +133,7 @@ public class Order extends AggregateRoot<OrderId> {
         items = builder.items;
         trackingId = builder.trackingId;
         orderStatus = builder.orderStatus;
-        failure = builder.failure;
+        failureMessages = builder.failure;
     }
 
     //Builder Method
@@ -97,7 +141,10 @@ public class Order extends AggregateRoot<OrderId> {
         return new Builder();
     }
 
-    //Getters - NOT INCLUDE ANY SETTER METHODS!
+
+    // ------------------ GETTERS ------------------
+
+    //NOT INCLUDE ANY SETTER METHODS!
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -127,8 +174,11 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public List<String> getFailure() {
-        return failure;
+        return failureMessages;
     }
+
+
+    // ------------------ BUILDER ------------------
 
     public static final class Builder {
         private OrderId orderId;
