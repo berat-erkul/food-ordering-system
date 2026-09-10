@@ -133,7 +133,7 @@ public class Order extends AggregateRoot<OrderId> {
         items = builder.items;
         trackingId = builder.trackingId;
         orderStatus = builder.orderStatus;
-        failureMessages = builder.failure;
+        failureMessages = builder.failureMessages;
     }
 
     //Builder Method
@@ -173,7 +173,7 @@ public class Order extends AggregateRoot<OrderId> {
         return orderStatus;
     }
 
-    public List<String> getFailure() {
+    public List<String> getFailureMessages() {
         return failureMessages;
     }
 
@@ -189,7 +189,7 @@ public class Order extends AggregateRoot<OrderId> {
         private List<OrderItem> items;
         private TrackingId trackingId;
         private OrderStatus orderStatus;
-        private List<String> failure;
+        private List<String> failureMessages;
 
         private Builder() {
         }
@@ -238,8 +238,8 @@ public class Order extends AggregateRoot<OrderId> {
             return this;
         }
 
-        public Builder failure(List<String> val) {
-            failure = val;
+        public Builder failureMessages(List<String> val) {
+            failureMessages = val;
             return this;
         }
 
