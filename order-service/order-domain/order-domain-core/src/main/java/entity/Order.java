@@ -39,9 +39,9 @@ public class Order extends AggregateRoot<OrderId> {
     // The validate -> initialize sequence is orchestrated by OrderDomainService,
     // not by Order itself. If any check throws, initializeOrder() is never reached.
     public void validateOrder(){
-        validateInitialOrder();
-        validateTotalPrice();
-        validateItemsPrice();
+        validateInitialOrder(); //private
+        validateTotalPrice();   //private
+        validateItemsPrice();   //private
     }
 
         // --- STATE CHANGING METHODS ---

@@ -1,0 +1,13 @@
+package event;
+
+import com.food.ordering.system.domain.event.DomainEvent;
+import entity.Order;
+
+import java.time.ZonedDateTime;
+
+public class OrderCancelledEvent extends OrderEvents {
+
+    public OrderCancelledEvent(Order order, ZonedDateTime createdAt) {
+        super(order, createdAt);
+    }
+}
