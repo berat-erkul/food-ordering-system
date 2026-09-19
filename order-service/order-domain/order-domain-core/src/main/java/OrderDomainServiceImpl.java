@@ -1,4 +1,6 @@
+import com.food.ordering.system.domain.valueobject.ProductId;
 import entity.Order;
+import entity.Product;
 import entity.Restaurant;
 import event.OrderCancelledEvent;
 import event.OrderCreatedEvent;
@@ -9,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class OrderDomainServiceImpl implements OrderDomainService {
@@ -81,13 +85,39 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     // Product'ın name/price alanlarını restoranın GERÇEK değerleriyle günceller.
     // Bu satırdan sonra orderItem.getProduct().getPrice() artık client'ın dediği değil,
     // restoranın DB'deki gerçek fiyatıdır — validateItemPrice() bunu baz alacak.
+    //
+    // ESKİ HALİ — iç içe forEach, O(n × m):
+    // n = order.getItems() boyutu, m = restaurant.getProducts() boyutu.
+    // Her orderItem için restaurant.getProducts() BAŞTAN SONA taranıyordu.
+    // Ayrıca eşleşme bulunamazsa (client restoranda olmayan bir productId gönderirse)
+    // sessizce hiçbir şey yapmıyordu — bu bir güvenlik açığıydı, aşağıdaki yeni
+    // sürümde `throw` ile kapatıldı.
+    //
+    // private void setOrderProductInformation(Order order, Restaurant restaurant) {
+    //     order.getItems().forEach(orderItem -> restaurant.getProducts().forEach(restaurantProduct -> {
+    //
+    //         if (orderItem.getProduct().getId().equals(restaurantProduct.getId())) {
+    //             orderItem.getProduct().updateWithConfirmedNameAndPrice(restaurantProduct.getName(), restaurantProduct.getPrice());
+    //         }
+    //
+    //     }));
+    // }
+
+    // YENİ HALİ — restaurant.getProducts() ÖNCE id'ye göre Map'e çevrilir (tek geçiş, O(m)),
+    // sonra her orderItem için O(1) lookup yapılır. Toplam maliyet O(n + m).
+    // Bonus: map.get(id) null dönerse "bu ürün restoranda yok" durumu artık GÖRÜNÜR ve reddediliyor
+    // → [[Nested Loop - HashMap Optimizasyonu]] notuna bak.
     private void setOrderProductInformation(Order order, Restaurant restaurant) {
-        order.getItems().forEach(orderItem -> restaurant.getProducts().forEach(restaurantProduct -> {
+        Map<ProductId, Product> restaurantProducts = restaurant.getProducts().stream()
+                .collect(Collectors.toMap(Product::getId, product -> product));
 
-            if (orderItem.getProduct().getId().equals(restaurantProduct.getId())) {
-                orderItem.getProduct().updateWithConfirmedNameAndPrice(restaurantProduct.getName(), restaurantProduct.getPrice());
+        order.getItems().forEach(orderItem -> {
+            Product restaurantProduct = restaurantProducts.get(orderItem.getProduct().getId());
+            if (restaurantProduct == null) {
+                throw new OrderDomainException("Product with id: " + orderItem.getProduct().getId().getValue()
+                        + " is not found in restaurant with id: " + restaurant.getId().getValue());
             }
-
-        }));
+            orderItem.getProduct().updateWithConfirmedNameAndPrice(restaurantProduct.getName(), restaurantProduct.getPrice());
+        });
     }
 }
