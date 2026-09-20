@@ -19,6 +19,20 @@
             <groupId>com.food.ordering.system</groupId>
             <artifactId>order-domain-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.food.ordering.system</groupId>
+            <artifactId>common-domain</artifactId>
+        </dependency>
+        <!-- data validation (@NotNull, @Size) on DTOs -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- Spring @Transactional -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
