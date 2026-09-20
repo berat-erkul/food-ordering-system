@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OrderDomainServiceImpl implements OrderDomainService {
 
+    private static final String UTC = "UTC";
+
     @Override
     public OrderCreatedEvent validateAndInitiateOrder(Order order, Restaurant restaurant) {
         // 1) Restaurant.isActive() — Restaurant aggregate'inin kendi kuralı, biz sadece çağırıyoruz
@@ -45,31 +47,34 @@ public class OrderDomainServiceImpl implements OrderDomainService {
         // 5) Domain service SADECE event'i üretip DÖNDÜRÜR, yayınlamaz (fire etmez).
         //    Yayınlama kararı (Kafka'ya basma) order-application-service'in işi —
         //    çünkü event ancak DB'ye persist işlemi başarılı olduktan sonra fırlatılmalı.
-        return new OrderCreatedEvent(order, ZonedDateTime.now(ZoneId.of("UTC")));
+        return new OrderCreatedEvent(order, ZonedDateTime.now(ZoneId.of(UTC)));
     }
 
 
     @Override
     public OrderPaidEvent payOrder(Order order) {
-        // TODO: order.pay() çağrılacak (PENDING → PAID), sonra OrderPaidEvent üretilip dönecek.
-        return null;
+        order.pay();
+        log.info("Order with id: {} is paid", order.getId().getValue());
+        return new OrderPaidEvent(order, ZonedDateTime.now(ZoneId.of(UTC)));
     }
 
     @Override
     public void approveOrder(Order order) {
-        // TODO: order.approve() çağrılacak (PAID → APPROVED). Event yok — saga'nın son adımı.
+        order.approve();
+        log.info("Order with id: {} is approved", order.getId().getValue());
     }
 
     @Override
     public OrderCancelledEvent cancelOrderPayment(Order order, List<String> failureMessages) {
-        // TODO: order.initCancel(failureMessages) çağrılacak (PAID → CANCELLING),
-        //       sonra OrderCancelledEvent üretilip dönecek (Payment servisine iade sinyali).
-        return null;
+        order.initCancel(failureMessages);
+        log.info("Order payment is cancelling for order id: {}", order.getId().getValue());
+        return new OrderCancelledEvent(order, ZonedDateTime.now(ZoneId.of(UTC)));
     }
 
     @Override
     public void cancelOrder(Order order, List<String> failureMessages) {
-        // TODO: order.cancel(failureMessages) çağrılacak (PENDING|CANCELLING → CANCELLED). Event yok.
+        order.cancel(failureMessages);
+        log.info("Order with id: {} is cancelled", order.getId().getValue());
     }
 
     // Restaurant aggregate'inin kuralını burada TEKRAR YAZMIYORUZ, sadece tetikliyoruz.
