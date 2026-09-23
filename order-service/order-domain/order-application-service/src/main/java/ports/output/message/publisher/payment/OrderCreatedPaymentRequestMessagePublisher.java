@@ -1,4 +1,10 @@
 package ports.output.message.publisher.payment;
 
-public interface OrderCreatedPaymentRequestMessagePublisher {
+import com.food.ordering.system.domain.event.publisher.DomainEventPublisher;
+import event.OrderCreatedEvent;
+
+public interface OrderCreatedPaymentRequestMessagePublisher extends DomainEventPublisher<OrderCreatedEvent> {
+
+
+
 }
