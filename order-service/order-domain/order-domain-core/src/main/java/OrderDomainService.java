@@ -12,10 +12,12 @@ public interface OrderDomainService {
 
     OrderPaidEvent payOrder(Order order);
 
+    //finish line
     void approveOrder (Order order);
 
     OrderCancelledEvent cancelOrderPayment(Order order, List<String> failureMessages);
 
+    //finish line
     void cancelOrder(Order order, List<String> failureMessages);
 
 

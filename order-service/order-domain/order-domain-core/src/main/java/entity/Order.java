@@ -19,6 +19,7 @@ public class Order extends AggregateRoot<OrderId> {
     private final List<OrderItem> items;
 
     // non-final fields - I'll change them in business logic after creating the order entity
+    //These fields not trigger in Order-Application-Service
     private TrackingId trackingId;
     private OrderStatus orderStatus; //comes from common module
     private List<String> failureMessages;
@@ -36,7 +37,7 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     // Called before initializeOrder() to check business invariants.
-    // The validate -> initialize sequence is orchestrated by OrderDomainService,
+    // Validate -> initialize sequence is orchestrated by OrderDomainService,
     // not by Order itself. If any check throws, initializeOrder() is never reached.
     public void validateOrder(){
         validateInitialOrder(); //private
