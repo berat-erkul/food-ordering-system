@@ -24,6 +24,7 @@ public class Order extends AggregateRoot<OrderId> {
     private OrderStatus orderStatus; //comes from common module
     private List<String> failureMessages;
 
+    private OrderPreferences orderPreferences;
 
     // ------------------ IMPLEMENTATION METHODS ------------------
 
@@ -126,15 +127,7 @@ public class Order extends AggregateRoot<OrderId> {
 
     //Constructor with builder design pattern (first fill then create with new keyword)
     private Order(Builder builder) {
-        super.setId(builder.orderId);
-        customerId = builder.customerId;
-        restaurantId = builder.restaurantId;
-        deliveryAddress = builder.deliveryAddress;
-        price = builder.price;
-        items = builder.items;
-        trackingId = builder.trackingId;
-        orderStatus = builder.orderStatus;
-        failureMessages = builder.failureMessages;
+
     }
 
     //Builder Method
@@ -178,6 +171,13 @@ public class Order extends AggregateRoot<OrderId> {
         return failureMessages;
     }
 
+    public OrderPreferences getOrderPreferences() {
+        return orderPreferences;
+    }
+
+    public void updateOrderPreferences(OrderPreferences build) {
+        this.orderPreferences = build;
+    }
 
     // ------------------ BUILDER ------------------
 
@@ -191,6 +191,7 @@ public class Order extends AggregateRoot<OrderId> {
         private TrackingId trackingId;
         private OrderStatus orderStatus;
         private List<String> failureMessages;
+        private OrderPreferences orderPreferences;
 
         private Builder() {
         }
@@ -241,6 +242,11 @@ public class Order extends AggregateRoot<OrderId> {
 
         public Builder failureMessages(List<String> val) {
             failureMessages = val;
+            return this;
+        }
+
+        public Builder orderPreferences(OrderPreferences val) {
+            orderPreferences = val;
             return this;
         }
 

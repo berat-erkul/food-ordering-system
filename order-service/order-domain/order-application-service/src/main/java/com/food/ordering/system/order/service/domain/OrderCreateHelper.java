@@ -1,11 +1,13 @@
 package com.food.ordering.system.order.service.domain;
 
+import com.food.ordering.system.domain.valueobject.OrderPreferences;
 import com.food.ordering.system.order.service.domain.dto.create.CreateOrderCommand;
 import com.food.ordering.system.order.service.domain.entity.Customer;
 import com.food.ordering.system.order.service.domain.entity.Order;
 import com.food.ordering.system.order.service.domain.entity.Restaurant;
 import com.food.ordering.system.order.service.domain.event.OrderCreatedEvent;
 import com.food.ordering.system.order.service.domain.exception.OrderDomainException;
+import com.food.ordering.system.order.service.domain.ports.output.ai.orer.noteinterpreter.OrderNoteInterPreter;
 import lombok.extern.slf4j.Slf4j;
 import com.food.ordering.system.order.service.domain.mapper.OrderDataMapper;
 import org.springframework.stereotype.Component;
@@ -26,38 +28,58 @@ public class OrderCreateHelper {
     private final CustomerRepository customerRepository;
     private final RestaurantRepository restaurantRepository;
     private final OrderDataMapper orderDataMapper;
+    private final OrderNoteInterPreter orderNoteInterPreter;
 
     public OrderCreateHelper(OrderDomainService orderDomainService,
                              OrderRepository orderRepository,
                              CustomerRepository customerRepository,
                              RestaurantRepository restaurantRepository,
-                             OrderDataMapper orderDataMapper) {
+                             OrderDataMapper orderDataMapper,
+                             OrderNoteInterPreter orderNoteInterPreter) {
         this.orderDomainService = orderDomainService;
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.restaurantRepository = restaurantRepository;
         this.orderDataMapper = orderDataMapper;
+        this.orderNoteInterPreter = orderNoteInterPreter;
     }
 
     @Transactional // --> MUST BE PUBLIC
-    public OrderCreatedEvent persistOrder(CreateOrderCommand createOrderCommand){
+    public OrderCreatedEvent persistOrder(CreateOrderCommand createOrderCommand) {
         checkCustomer(createOrderCommand.getCustomerId());
         Restaurant restaurant = checkRestaurant(createOrderCommand);
         Order order = orderDataMapper.createOrderCommandToOrder(createOrderCommand);
 
+        updateOrderPreferences(createOrderCommand, order);
+
         //Here first time I've ever calling Business layer
-        OrderCreatedEvent orderCreatedEvent = orderDomainService.validateAndInitiateOrder(order,restaurant);
+        OrderCreatedEvent orderCreatedEvent = orderDomainService.validateAndInitiateOrder(order, restaurant);
         //Here is my save "command"
         saveOrder(order);
-        log.info("Order is created with id:{}",orderCreatedEvent.getOrder().getId().getValue());
+        log.info("Order is created with id:{}", orderCreatedEvent.getOrder().getId().getValue());
         return orderCreatedEvent;
+    }
+
+    private void updateOrderPreferences(CreateOrderCommand createOrderCommand, Order order) {
+        try {
+            String orderNotes = createOrderCommand.getOrderNotes();
+            if (orderNotes == null || orderNotes.isEmpty()) {
+                order.updateOrderPreferences(OrderPreferences.builder().build());
+                return;
+            }
+            OrderPreferences orderPreferences = orderNoteInterPreter.interpret(orderNotes);
+            order.updateOrderPreferences(orderPreferences);
+        } catch (Exception e) {
+            log.warn("Encountered Error in AI Order Note Interpretter. Skipping order notes!");
+            order.updateOrderPreferences(OrderPreferences.builder().build());
+        }
     }
 
     private Restaurant checkRestaurant(CreateOrderCommand createOrderCommand) {
         //Here we decided to need a mapper: CreateOrderCommandToRestaurant
         Restaurant restaurant = orderDataMapper.createOrderCommandToRestaurant(createOrderCommand);
         Optional<Restaurant> optionalRestaurant = restaurantRepository.findRestaurantInformation(restaurant);
-        if (optionalRestaurant.isEmpty()){
+        if (optionalRestaurant.isEmpty()) {
             log.warn("Could not find restaurant with restaurant id: {}", createOrderCommand.getRestaurantId());
             throw new OrderDomainException("Could not find restaurant with restaurant id: " + createOrderCommand.getRestaurantId());
         }
@@ -66,21 +88,21 @@ public class OrderCreateHelper {
 
     private void checkCustomer(UUID customerId) {
         Optional<Customer> customer = customerRepository.findCustomer(customerId);
-        if (customer.isEmpty()){
+        if (customer.isEmpty()) {
             log.warn("Could not find customer with customer id: {}", customerId);
-            throw new OrderDomainException("Could not find customer with customer id: " + customer);
+            throw new OrderDomainException("Could not find customer with customer id: " + customerId);
         }
     }
 
     // in @Transactional we call saveOrder method to save the order to the database, and if it fails,
     // we throw an exception to rollback the transaction
-    private Order saveOrder(Order order){
+    private Order saveOrder(Order order) {
         Order orderResutl = orderRepository.save(order);
-        if(orderResutl == null){
+        if (orderResutl == null) {
             log.error("Could not save order with tracking id: {}", order.getTrackingId());
             throw new OrderDomainException("Could not save order with tracking id: " + order.getTrackingId());
         }
-        log.info("Order is saved with id: {}",orderResutl.getId().getValue());
+        log.info("Order is saved with id: {}", orderResutl.getId().getValue());
         return orderResutl;
     }
 }
