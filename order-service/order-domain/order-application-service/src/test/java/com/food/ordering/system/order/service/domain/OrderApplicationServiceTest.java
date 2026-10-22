@@ -12,6 +12,7 @@ import com.food.ordering.system.order.service.domain.entity.Restaurant;
 import com.food.ordering.system.order.service.domain.exception.OrderDomainException;
 import com.food.ordering.system.order.service.domain.mapper.OrderDataMapper;
 import com.food.ordering.system.order.service.domain.ports.input.service.OrderApplicationService;
+import com.food.ordering.system.order.service.domain.ports.output.ai.orer.noteinterpreter.OrderNoteInterPreter;
 import com.food.ordering.system.order.service.domain.ports.output.repository.CustomerRepository;
 import com.food.ordering.system.order.service.domain.ports.output.repository.OrderRepository;
 import com.food.ordering.system.order.service.domain.ports.output.repository.RestaurantRepository;
@@ -48,23 +49,27 @@ public class OrderApplicationServiceTest {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
+    @Autowired
+    private OrderNoteInterPreter orderNoteInterPreter;
+
     // 1 for each scenario
     private CreateOrderCommand createOrderCommand;  //best
     private CreateOrderCommand createOrderCommandWrongPrice;  // wrong total price
     private CreateOrderCommand createOrderCommandWrongProductPrice; //
 
 
-    private final UUID CUSTOMER_ID = UUID.fromString("12345678-1234-1234-1234-123456789012");
-    private final UUID RESTAURANT_ID = UUID.fromString("12345678-1234-1234-1234-123456789012");
-    private final UUID PRODUCT_ID = UUID.fromString("12345678-1234-1234-1234-123456789012");
-    private final UUID PRODUCT_ID_2 = UUID.fromString("12345678-1234-1234-1234-123456789013");
-    private final UUID Order_ID = UUID.fromString("12345678-1234-1234-1234-123456789012");
+    private final UUID CUSTOMER_ID = UUID.fromString("d215b5f8-0249-4dc5-89a3-51fd148cfb41");
+    private final UUID RESTAURANT_ID = UUID.fromString("d215b5f8-0249-4dc5-89a3-51fd148cfb45");
+    private final UUID PRODUCT_ID = UUID.fromString("d215b5f8-0249-4dc5-89a3-51fd148cfb48");
+    private final UUID PRODUCT_ID_2 = UUID.fromString("d215b5f8-0249-4dc5-89a3-51fd148cfb49");
+    private final UUID ORDER_ID = UUID.fromString("15a497c1-0f4b-4eff-b9f4-c402c8c07afb");
     private final BigDecimal PRICE = new BigDecimal("200.00");
 
     //---------------------------------------------------------------------------------------------------
 
     @BeforeAll
     public void init() {
+        String orderNotes = "no onions pls, with pickles, extra spicy but not too spicy. Leave at the door!";
         createOrderCommand = CreateOrderCommand.builder()
                 .customerId(CUSTOMER_ID)
                 .restaurantId(RESTAURANT_ID)
@@ -88,6 +93,7 @@ public class OrderApplicationServiceTest {
                                 .subTotal(new BigDecimal("150.00"))
                                 .build()
                 ))
+                .orderNotes(orderNotes)
                 .build();
 
 
@@ -161,8 +167,18 @@ public class OrderApplicationServiceTest {
 
         //---
 
+        OrderPreferences orderPreferences = OrderPreferences.builder()
+                .addIngredients(List.of("pickle"))
+                .removeIngredients(List.of("onion"))
+                .spiceLevel(SpiceLevel.MEDIUM)
+                .deliveryInstructions("Leave at the door!")
+                .build();
+
+        //---
+
         Order order = orderDataMapper.createOrderCommandToOrder(createOrderCommand);
-        order.setId(new OrderId(Order_ID));
+        order.setId(new OrderId(ORDER_ID));
+        order.updateOrderPreferences(orderPreferences);
 
         //---------------------------------------------------------------------------------------------------
 
@@ -170,6 +186,8 @@ public class OrderApplicationServiceTest {
         when (restaurantRepository.findRestaurantInformation(orderDataMapper.createOrderCommandToRestaurant(createOrderCommand)))
                 .thenReturn(Optional.of(restaurantResponse)) ;
         when (orderRepository. save(any(Order.class))) . thenReturn(order);
+
+        when(orderNoteInterPreter.interpret(orderNotes)).thenReturn(orderPreferences);
     }
 
 

@@ -1,5 +1,6 @@
 package com.food.ordering.system.order.service.domain;
 
+import com.food.ordering.system.order.service.domain.ports.output.ai.orer.noteinterpreter.OrderNoteInterPreter;
 import com.food.ordering.system.order.service.domain.ports.output.message.publisher.payment.OrderCancelledPaymentRequestMessagePublisher;
 import com.food.ordering.system.order.service.domain.ports.output.message.publisher.payment.OrderCreatedPaymentRequestMessagePublisher;
 import com.food.ordering.system.order.service.domain.ports.output.message.publisher.restaurantapproval.OrderPaidRestaurantRequestMessagePublisher;
@@ -45,6 +46,11 @@ public class OrderTestConfigurationClass {
         return Mockito.mock(RestaurantRepository.class);
     }
 
+
+    @Bean
+    public OrderNoteInterPreter orderNoteInterPreter(){
+        return Mockito.mock(OrderNoteInterPreter.class);
+    }
 
     //A Real Bean
     @Bean
