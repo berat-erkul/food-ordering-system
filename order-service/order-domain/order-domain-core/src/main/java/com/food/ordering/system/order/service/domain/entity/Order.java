@@ -127,7 +127,16 @@ public class Order extends AggregateRoot<OrderId> {
 
     //Constructor with builder design pattern (first fill then create with new keyword)
     private Order(Builder builder) {
-
+        super.setId(builder.orderId);
+        customerId = builder.customerId;
+        restaurantId = builder.restaurantId;
+        deliveryAddress = builder.deliveryAddress;
+        price = builder.price;
+        items = builder.items;
+        trackingId = builder.trackingId;
+        orderStatus = builder.orderStatus;
+        failureMessages = builder.failureMessages;
+        orderPreferences = builder.orderPreferences;
     }
 
     //Builder Method
