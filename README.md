@@ -162,6 +162,8 @@ If the restaurant rejects the order, Order Service moves to `CANCELLING` and sen
 
 A local **3-broker cluster in KRaft mode** (no ZooKeeper), started with Docker Compose.
 
+> 🖊️ **Full hand-drawn diagram:** [brokers, partition leaders, producers and consumer groups on Excalidraw](https://excalidraw.com/#json=FXJskJy_OIhSxa31w4rPT,mq5xOOGNntASXbbBMdhZ4g)
+
 | Topic | Producer | Consumer | Partitions × RF |
 |---|---|---|---|
 | `payment-request` | Order | Payment | 3 × 3 |
